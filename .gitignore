@@ -2,3 +2,5 @@ data/*.zip
 data/*.sh*
 data/*.dbf
 data/*.prj
+dotnet/obj
+dotnet/bin

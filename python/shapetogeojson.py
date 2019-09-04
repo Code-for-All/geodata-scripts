@@ -83,8 +83,8 @@ def getunzipped(theurl, thedir):
 
 def main():
   """Main - program execute"""
-  #getunzipped('http://terrabrasilis.dpi.inpe.br/download/deter-amz/deter-amz_all.zip', './data') 
-  shape2geojson("./data/deter_all.shp")
+  getunzipped('http://terrabrasilis.dpi.inpe.br/download/deter-amz/deter-amz_all.zip', '../data') 
+  shape2geojson("../data/deter_all.shp")
 
 
 if __name__ == '__main__':

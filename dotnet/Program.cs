@@ -2,6 +2,8 @@
 using System.Net;
 using System.IO;
 using System.IO.Compression;
+using NetTopologySuite.IO;
+using NetTopologySuite.Geometries;
 
 namespace shape2geojson
 {
@@ -15,6 +17,14 @@ namespace shape2geojson
         */
         static void shape2geojson(string filename)
         {
+            GeometryFactory factory = new GeometryFactory();
+            using (var reader = new ShapefileDataReader("../data/deter_all.shp", factory))
+            {
+                while (reader.Read())
+                {
+                    Console.WriteLine(reader.GetValue(length - 1));
+                }
+            }
             throw new NotImplementedException();
         }
 
@@ -23,7 +33,7 @@ namespace shape2geojson
         */
         static void getunzipped(string theurl, string thedir)
         {
-            string name = Path.Combine(thedir, "temp2.zip");
+            string name = Path.Combine(thedir, "temp.zip");
             WebClient myWebClient = new WebClient();
             try
             {
@@ -45,7 +55,7 @@ namespace shape2geojson
         /* Main - Program execute */
         static void Main(string[] args)
         {
-            getunzipped("http://terrabrasilis.dpi.inpe.br/download/deter-amz/deter-amz_all.zip", "../data");
+            //getunzipped("http://terrabrasilis.dpi.inpe.br/download/deter-amz/deter-amz_all.zip", "../data");
             shape2geojson("../data/deter_all.shp");
         }
 

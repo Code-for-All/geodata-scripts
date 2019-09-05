@@ -5,6 +5,23 @@ import shapefile
 import datetime
 from json import dumps
 
+def writegeojson(filename, key, dict):
+  geojson = open(filename + "-" + key + ".geojson", "w")
+  geojson.write(dumps({"type": "FeatureCollection",\
+    "features": dict[key]}, indent=2, default=myconverter) + "\n")
+  geojson.close()
+
+def writecsv(filename, key, dict):
+  csv = open(filename + "-" + key + ".csv", "w")
+  print (";".join(dict[key][0]['properties'].keys()), file=csv)
+  for item in dict[key]:
+    itemvaluelist = list(item['properties'].values())
+    itemvaluelist[3] = itemvaluelist[3].strftime('%Y-%m-%d')
+    itemvaluelist[7] = ('%.16f' % itemvaluelist[7]).rstrip('0').rstrip('.')
+    itemvaluelist[8] = ('%.16f' % itemvaluelist[8]).rstrip('0').rstrip('.')
+    itemvaluelist[9] = ('%.16f' % itemvaluelist[9]).rstrip('0').rstrip('.')
+    print (";".join(itemvaluelist), file=csv)
+  csv.close()
 
 def myconverter(o):
   """
@@ -53,10 +70,8 @@ def shape2geojson(filename):
 
   # write a GeoJSON file for each month
   for key in monthsdict:
-    geojson = open(filename + "-" + key + ".geojson", "w")
-    geojson.write(dumps({"type": "FeatureCollection",\
-      "features": monthsdict[key]}, indent=2, default=myconverter) + "\n")
-    geojson.close()
+    writegeojson(filename, key, monthsdict)
+    writecsv(filename, key, monthsdict)
     # End of processing.
 
 
@@ -83,7 +98,7 @@ def getunzipped(theurl, thedir):
 
 def main():
   """Main - program execute"""
-  getunzipped('http://terrabrasilis.dpi.inpe.br/download/deter-amz/deter-amz_all.zip', '../data') 
+  #getunzipped('http://terrabrasilis.dpi.inpe.br/download/deter-amz/deter-amz_all.zip', '../data') 
   shape2geojson("../data/deter_all.shp")
 
 

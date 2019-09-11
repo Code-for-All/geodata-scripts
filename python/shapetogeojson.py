@@ -16,10 +16,11 @@ def writecsv(filename, key, dict):
   print (";".join(dict[key][0]['properties'].keys()), file=csv)
   for item in dict[key]:
     itemvaluelist = list(item['properties'].values())
-    itemvaluelist[3] = itemvaluelist[3].strftime('%Y-%m-%d')
-    itemvaluelist[7] = ('%.16f' % itemvaluelist[7]).rstrip('0').rstrip('.')
+    itemvaluelist[0] = str(itemvaluelist[0])
+    itemvaluelist[4] = itemvaluelist[4].strftime('%Y-%m-%d')
     itemvaluelist[8] = ('%.16f' % itemvaluelist[8]).rstrip('0').rstrip('.')
     itemvaluelist[9] = ('%.16f' % itemvaluelist[9]).rstrip('0').rstrip('.')
+    itemvaluelist[10] = ('%.16f' % itemvaluelist[10]).rstrip('0').rstrip('.')
     print (";".join(itemvaluelist), file=csv)
   csv.close()
 
@@ -45,6 +46,7 @@ def shape2geojson(filename):
   reader = shapefile.Reader(filename)
   fields = reader.fields[1:]
   field_names = [field[0] for field in fields]
+  field_names.insert(0,"ROW_NUMBER")
   months = []
   
   # We gather all the unique months..
@@ -62,8 +64,10 @@ def shape2geojson(filename):
 
   # Add the features to the dictionary for the given months..
   for sr in reader.shapeRecords():
-    atr = dict(zip(field_names, sr.record))
-    m = sr.record[3].strftime('%Y%m')
+    rawatt = sr.record
+    rawatt.insert(0,sr.record.oid)
+    atr = dict(zip(field_names, rawatt))
+    m = sr.record[4].strftime('%Y%m')
     geom = sr.shape.__geo_interface__
     monthsdict[m].append(dict(type="Feature", \
         geometry=geom, properties=atr))

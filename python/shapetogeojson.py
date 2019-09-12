@@ -1,9 +1,38 @@
 import os
-import urllib.request
+from urllib import request, parse
 import zipfile
 import shapefile
 import datetime
-from json import dumps
+from json import dumps, loads
+import tinys3
+
+mapbox_user = '<MAPBOX_USERNAME>'
+mapbox_access_token = '<MaPBOX_ACCESS_TOKEN>'
+
+def getS3token():
+  """
+  Request the credentials to the temporary s3 bucket that will be used to upload the data
+  See: https://docs.mapbox.com/help/tutorials/upload-curl/
+  """  
+  req = request.Request('https://api.mapbox.com/uploads/v1/' + mapbox_user +'/credentials?access_token=' + mapbox_access_token, None)
+  resource = request.urlopen(req)
+  response = loads(resource.read().decode(resource.headers.get_content_charset()))
+  return response
+
+def stageUpload(key, secret, bucket, file, url):
+  """
+  Upload the data file to the s3 bucket and retrieve the credentials that need to be used to upload to mapbox
+  Not sure if tinys3 is the right lib to use, boto may be better
+  """
+  raise NotImplementedError("stageUpload is not implemented yet")
+
+  #conn = tinys3.Connection(key,secret,tls=True, endpoint=url)
+  #f = open(file,'rb')
+  #conn.upload(file,f,bucket)
+
+def mapboxUpload():
+  raise NotImplementedError("MapboxUpload is not implemented yet")
+
 
 def writegeojson(filename, key, dict):
   geojson = open(filename + "-" + key + ".geojson", "w")
@@ -86,7 +115,7 @@ def getunzipped(theurl, thedir):
 
   name = os.path.join(thedir, 'temp.zip')
   try:
-    name, hdrs = urllib.request.urlretrieve(theurl, name)
+    name, hdrs = request.urlretrieve(theurl, name)
   except IOError as e:
     print ("Can't retrieve %r to %r: %s" % (theurl, thedir, e))
     return
@@ -101,10 +130,14 @@ def getunzipped(theurl, thedir):
 
 
 def main():
-  """Main - program execute"""
-  #getunzipped('http://terrabrasilis.dpi.inpe.br/download/deter-amz/deter-amz_all.zip', '../data') 
+  """
+  Main - program execute
+  """
+  getunzipped('http://terrabrasilis.dpi.inpe.br/download/deter-amz/deter-amz_all.zip', '../data') 
   shape2geojson("../data/deter_all.shp")
-
+  #credentials = getS3token()
+  #stageUpload(credentials['accessKeyId'], credentials['secretAccessKey'], credentials['bucket'], '../data/deter_all.shp-201608.geojson', credentials['url'])
+  #mapboxUpload()
 
 if __name__ == '__main__':
   main()

@@ -1,1 +1,3 @@
 pyshp
+boto
+tinys3

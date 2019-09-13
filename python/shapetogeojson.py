@@ -4,35 +4,67 @@ import zipfile
 import shapefile
 import datetime
 from json import dumps, loads
-import tinys3
+from mapbox import Uploader
+from dotenv import load_dotenv
+from time import sleep
+from random import randint
+load_dotenv()
 
-mapbox_user = '<MAPBOX_USERNAME>'
-mapbox_access_token = '<MaPBOX_ACCESS_TOKEN>'
+import os
 
-def getS3token():
+"""
+Make sure you have a .env file in the directory where this script is containing the following:
+
+  MAPBOX_TOKEN=sk.somelongstringswithadot.anotherstring-mend
+  MAPBOX_USER=yourusername
+
+"""
+
+mapbox_user = os.getenv("MAPBOX_USER")
+mapbox_access_token = os.getenv("MAPBOX_TOKEN")
+
+def uploadToMapbox(datadir):
   """
-  Request the credentials to the temporary s3 bucket that will be used to upload the data
-  See: https://docs.mapbox.com/help/tutorials/upload-curl/
-  """  
-  req = request.Request('https://api.mapbox.com/uploads/v1/' + mapbox_user +'/credentials?access_token=' + mapbox_access_token, None)
-  resource = request.urlopen(req)
-  response = loads(resource.read().decode(resource.headers.get_content_charset()))
-  return response
-
-def stageUpload(key, secret, bucket, file, url):
+  Upload all the geojson files from a given directory to mapbox as tilesets
   """
-  Upload the data file to the s3 bucket and retrieve the credentials that need to be used to upload to mapbox
-  Not sure if tinys3 is the right lib to use, boto may be better
+  for file in os.listdir(datadir):
+    filename = os.fsdecode(file)
+    if filename.endswith(".geojson"): 
+      print(os.path.splitext(file)[0])
+      mapboxUpload(os.path.join(datadir, file), os.path.splitext(file)[0])
+      continue
+    else:
+      continue
+
+def mapboxUpload(filename):
   """
-  raise NotImplementedError("stageUpload is not implemented yet")
+  See: https://mapbox-mapbox.readthedocs-hosted.com/en/latest/uploads.html#uploads
+  """
 
-  #conn = tinys3.Connection(key,secret,tls=True, endpoint=url)
-  #f = open(file,'rb')
-  #conn.upload(file,f,bucket)
+  #raise NotImplementedError("MapboxUpload is not implemented yet")
 
-def mapboxUpload():
-  raise NotImplementedError("MapboxUpload is not implemented yet")
+  service = Uploader()
+  service.session.params['access_token'] = mapbox_access_token
+  mapid = 'uploads-test' # 'uploads-test'
+  with open(filename, 'rb') as src:
+    upload_resp = service.upload(src, mapid)
 
+    if upload_resp.status_code == 422:
+      for i in range(5):
+        sleep(5)
+        with open(filename, 'rb') as src:
+          upload_resp = service.upload(src, mapid)
+        if upload_resp.status_code != 422:
+          break
+    
+    upload_id = upload_resp.json()['id']
+    for i in range(5):
+      status_resp = service.status(upload_id).json()
+      if status_resp['complete']:
+        print(status_resp)
+        print("Finished uploading tileset " + mapid)
+        break
+      sleep(5)
 
 def writegeojson(filename, key, dict):
   geojson = open(filename + "-" + key + ".geojson", "w")
@@ -133,11 +165,12 @@ def main():
   """
   Main - program execute
   """
-  getunzipped('http://terrabrasilis.dpi.inpe.br/download/deter-amz/deter-amz_all.zip', '../data') 
+
+  datadir = '../data/'
+  getunzipped('http://terrabrasilis.dpi.inpe.br/download/deter-amz/deter-amz_all.zip', datadir) 
   shape2geojson("../data/deter_all.shp")
-  #credentials = getS3token()
-  #stageUpload(credentials['accessKeyId'], credentials['secretAccessKey'], credentials['bucket'], '../data/deter_all.shp-201608.geojson', credentials['url'])
-  #mapboxUpload()
+  uploadToMapbox(datadir)
+  exit()
 
 if __name__ == '__main__':
   main()

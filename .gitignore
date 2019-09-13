@@ -4,3 +4,4 @@ data/*.dbf
 data/*.prj
 dotnet/obj
 dotnet/bin
+.env
